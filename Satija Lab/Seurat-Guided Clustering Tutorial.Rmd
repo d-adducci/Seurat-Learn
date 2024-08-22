@@ -1,0 +1,113 @@
+---
+title: "Seurat - Guided Clustering Tutorial"
+output: html_document
+---
+
+
+
+## Setup the Seurat Object
+
+```{r}
+
+library(dplyr)
+library(Seurat)
+library(patchwork)
+library(SeuratData)
+
+# Load the PBMC dataset
+pbmc.data <- LoadData("pbmc3k")
+
+```
+
+```{r}
+
+pbmc.data[c("CD3D","TCL1A","MS4A1"),1:30]
+
+```
+
+
+## Standard Pre-processing workflow
+
+```{r}
+
+# The [[ operator can add columns to object metadata. This is a great place to stash QC sats
+pbmc.data[["percent.mt"]] <- PercentageFeatureSet(pbmc.data,pattern = "^MT-")
+
+```
+
+```{r, fig.height = 7, fig.width = 12}
+
+# Visualize QC metrics as a violin plot
+VlnPlot(pbmc.data,
+        features = c("nFeature_RNA","nCount_RNA","percent.mt"),
+        ncol = 3)
+
+```
+
+```{r,fig.height = 7, fig.width = 10}
+
+# FeatureScatter is typically used to visualize feature-feature relationships,
+# but can be used for anything calculated by the object, i.e. columns in object,
+# metadata, PC scores etc.
+
+plot1 <- FeatureScatter(pbmc.data, feature1 = "nCount_RNA", feature2 = "percent.mt")
+plot2 <- FeatureScatter(pbmc.data, feature1 = "nCount_RNA", 
+                        feature2 = "nFeature_RNA")
+plot1 + plot2
+
+```
+
+
+## Normalizing the data
+
+```{r}
+
+pbmc.data <- NormalizeData(pbmc.data,normalization.metho = "LogNormalize",
+                           scale.factor = 1000)
+
+```
+
+## Identification of highly variable features (feature selection)
+
+```{r, fig.height = 7, fig.width = 10}
+
+pbmc.data <- FindVariableFeatures(pbmc.data, selection.method = "vst", nfeatures = 2000)
+
+# Identify the 10 most highly variable genes
+top10 <- head(VariableFeatures(pbmc.data),10)
+
+# plot variable features with and without labels
+plot1 <- VariableFeaturePlot(pbmc.data)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+plot1 + plot2
+
+```
+
+## Scaling the Data
+
+```{r}
+
+all.genes <- rownames(pbmc.data)
+pbmc.data <- ScaleData(pbmc.data, features = all.genes)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
